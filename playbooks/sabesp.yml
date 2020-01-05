@@ -1,0 +1,7 @@
+- name: Get Sabesp Bills
+  hosts: localhost
+  connection: local
+  vars_files:
+    - ../vars/sabesp.yml
+  roles:
+    - { role: sabesp }
