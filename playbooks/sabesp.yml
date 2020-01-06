@@ -5,3 +5,4 @@
     - ../vars/sabesp.yml
   roles:
     - { role: sabesp }
+  tags: sabesp
