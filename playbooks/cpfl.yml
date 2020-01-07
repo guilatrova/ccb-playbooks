@@ -1,0 +1,10 @@
+- name: Get CPFL Bills
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  vars_files:
+    - ../vars/cpfl.yml
+    - ../vars/email.yml
+  roles:
+    - { role: cpfl }
+  tags: cpfl

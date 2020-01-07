@@ -1,0 +1,89 @@
+<html>
+
+<head>
+    <style type="text/css">
+        table {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+
+        td,
+        th {
+            border: 1px solid black;
+        }
+
+        .red {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>{{ title }}</h1>
+
+    <h3>Contas vencidas</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Localidade</th>
+                <th>Mês referente</th>
+                <th>Vencimento</th>
+                <th>Valor</th>
+                <th>Código de Barras</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for instalacao in contasaberto.results %}
+                {% for conta in instalacao.json.ContasAberto %}
+                    {% if (conta['Vencimento'] | to_datetime('%Y-%m-%dT%H:%M:%S')) < (ansible_date_time.date | to_datetime('%Y-%m-%d')) %}
+                        <tr>
+                            <td>{{ instalacao.item.Bairro }} {{ instalacao.item.DesComplemento2 }}</td>
+                            <td>{{ conta['MesReferencia'] }}</td>
+                            <td>{{
+                                '%d/%m/%Y' | strftime(
+                                    (conta['Vencimento'] | to_datetime('%Y-%m-%dT%H:%M:%S')
+                                ).timestamp())
+                            }}</td>
+                            <td>R$ {{ conta['Valor'] }}</td>
+                            <td>{{ conta['CodigoBarras'] }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3>Contas em aberto</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Localidade</th>
+                <th>Mês referente</th>
+                <th>Vencimento</th>
+                <th>Valor</th>
+                <th>Código de Barras</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for instalacao in contasaberto.results %}
+                {% for conta in instalacao.json.ContasAberto %}
+                    <tr>
+                        <td>{{ instalacao.item.Bairro }} {{ instalacao.item.DesComplemento2 }}</td>
+                        <td>{{ conta['MesReferencia'] }}</td>
+                        <td>{{
+                            '%d/%m/%Y' | strftime(
+                                (conta['Vencimento'] | to_datetime('%Y-%m-%dT%H:%M:%S')
+                            ).timestamp())
+                        }}</td>
+                        <td>R$ {{ conta['Valor'] }}</td>
+                        <td>{{ conta['CodigoBarras'] }}</td>
+                    </tr>
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p>E-mail enviado automaticamente.</p>
+</body>
+
+</html>

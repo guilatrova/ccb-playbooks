@@ -1,0 +1,53 @@
+- name: Setup url
+  set_fact:
+    base_url: "https://servicosonline.cpfl.com.br/agencia-webapi/api"
+
+- name: Login
+  uri:
+    url: "{{ base_url }}/token"
+    method: POST
+    body_format: json
+    body: "client_id=agencia-virtual-cpfl-web&grant_type=password&password={{ password }}&username={{ username }}"
+    return_content: yes
+  register: login
+
+- name: Setup vars
+  set_fact:
+    instalacoes: "{{ login.json.ListaInstalacoes | from_json }}"
+    token: "{{ login.json.access_token }}"
+    title: "Relatório de contas CPFL da CCB {{ lookup('pipe','date +%d/%m/%Y') }}"
+
+- name: Get ContasAberto
+  uri:
+    url: "{{ base_url }}/historico-contas/validar-situacao"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ token }}"
+    body_format: json
+    body:
+      RetornarDetalhes: true
+      CodigoFase: 1
+      IndGrupoA: "N"
+      Situacao: "ATIVA"
+      ContaContrato: "{{ conta_contrato }}"
+      CodigoClasse: 3
+      CodEmpresaSAP: "PIRA"
+      Instalacao: "{{ item.Instalacao }}"
+      ParceiroNegocio: "{{ parceiro_negocio }}"
+      GerarProtocolo: false
+    return_content: yes
+  loop: "{{ instalacoes }}"
+  register: contasaberto
+
+- name: Send email
+  mail:
+    host: "{{ email_host }}"
+    port: "{{ email_port }}"
+    username: "{{ email_username }}"
+    password: "{{ email_password }}"
+    from: "{{ email_from }}"
+    to: "{{ email_to }}"
+    subject: "{{ title }}"
+    subtype: html
+    body: "{{ lookup('template', 'templates/mail_body.j2') }}"
+  tags: email
