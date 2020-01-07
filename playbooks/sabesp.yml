@@ -1,8 +1,10 @@
 - name: Get Sabesp Bills
   hosts: localhost
   connection: local
+  gather_facts: true
   vars_files:
     - ../vars/sabesp.yml
+    - ../vars/email.yml
   roles:
     - { role: sabesp }
   tags: sabesp

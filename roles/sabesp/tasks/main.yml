@@ -2,6 +2,7 @@
   set_fact:
     container_name: sabesp_selenium
     image_name: selenium-test
+    title: "Relatório de contas Sabesp da CCB {{ lookup('pipe','date +%d/%m/%Y') }}"
 
 - name: Start container fresh
   docker_container:
@@ -30,7 +31,9 @@
   set_fact:
     sabesp_bills: "{{ sabesp_bills|default([]) + [{ 'location': element[0], 'month': element[1], 'due_date': element[2], 'value': element[3] }] }}"
   loop: "{{ output_flatten.split('\n') }}"
-  when: item != ''
+  when:
+    - "item != ''"
+    - "'SEM CONTA' not in item"
 
 - name: Display bills
   debug:
@@ -40,3 +43,16 @@
   docker_container:
     name: "{{ container_name }}"
     state: absent
+
+- name: Send email
+  mail:
+    host: "{{ email_host }}"
+    port: "{{ email_port }}"
+    username: "{{ email_username }}"
+    password: "{{ email_password }}"
+    from: "{{ email_from }}"
+    to: "{{ email_to }}"
+    subject: "{{ title }}"
+    subtype: html
+    body: "{{ lookup('template', 'templates/mail_body.j2') }}"
+  tags: email

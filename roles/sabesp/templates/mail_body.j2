@@ -1,0 +1,73 @@
+<html>
+
+<head>
+    <style type="text/css">
+        table {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+
+        td,
+        th {
+            border: 1px solid black;
+        }
+
+        .red {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>{{ title }}</h1>
+
+    <h3>Contas vencidas</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Localidade</th>
+                <th>Mês referente</th>
+                <th>Vencimento</th>
+                <th>Valor</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for conta in sabesp_bills %}
+                {% if (conta['due_date'] | to_datetime('%d/%m/%Y')) < (ansible_date_time.date | to_datetime('%Y-%m-%d')) %}
+                    <tr>
+                        <td>{{ conta['location'] }}</td>
+                        <td>{{ conta['month'] }}</td>
+                        <td>{{ conta['due_date'] }}</td>
+                        <td>R$ {{ conta['value'] }}</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3>Contas em aberto</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Localidade</th>
+                <th>Mês referente</th>
+                <th>Vencimento</th>
+                <th>Valor</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for conta in sabesp_bills %}
+                <tr>
+                    <td>{{ conta['location'] }}</td>
+                    <td>{{ conta['month'] }}</td>
+                    <td>{{ conta['due_date'] }}</td>
+                    <td>R$ {{ conta['value'] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p>E-mail enviado automaticamente.</p>
+</body>
+
+</html>
