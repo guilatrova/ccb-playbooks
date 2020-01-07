@@ -1,0 +1,8 @@
+email_host: smtp.gmail.com
+email_port: 587
+email_username: youremail@gmail.com
+email_password: email_password
+email_from: from@gmail.com
+email_to:
+  - user1@gmail.com
+  - user2@gmail.com

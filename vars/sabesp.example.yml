@@ -1,0 +1,5 @@
+owner: "MY NAME"
+
+rgis:
+  - { location: "My Home", rgi: "0123456789" }
+  - { location: "My Aunt", rgi: "0123456789" }
