@@ -1,28 +1,42 @@
-- name: Backup files to S3
-  s3_sync:
-    bucket: "{{ bucket }}"
-    profile: "{{ aws_profile }}"
-    file_root: "{{ item.local }}"
-    key_prefix: "{{ item.remote }}"
-    include: "{{ item.filter | default('*') }}"
-    exclude: "none" # I want to include hidden items and folders, selected "none" as a file that problably will never exist
-  with_items:
-    - "{{ s3_sync_files }}"
-  register: result
+- name: Setup vars
+  set_fact:
+    container_name: sabesp_selenium
+    image_name: selenium-test
 
-- name: Output results
+- name: Start container fresh
+  docker_container:
+    name: "{{ container_name }}"
+    state: absent
+
+- name: Get SABESP bills
+  docker_container:
+    name: "{{ container_name }}"
+    image: "{{ image_name }}"
+    state: started
+    command: "python /run.py '{{ item.location }}' '{{ item.rgi }}' '{{ owner }}'"
+    detach: false
+    volumes:
+      - ../roles/sabesp/tasks/sabesp.py:/run.py
+  register: output
+  loop: "{{ rgis }}"
+
+- name: Flatten results
+  set_fact:
+    output_flatten: "{{ output.results | map(attribute='ansible_facts.docker_container.Output') | list | join('\n') }}"
+
+- name: Setup results
+  vars:
+    element: "{{ item.split(';') }}"
+  set_fact:
+    sabesp_bills: "{{ sabesp_bills|default([]) + [{ 'location': element[0], 'month': element[1], 'due_date': element[2], 'value': element[3] }] }}"
+  loop: "{{ output_flatten.split('\n') }}"
+  when: item != ''
+
+- name: Display bills
   debug:
-    var: result
-# TODO: Keybindings Not working as expected, figure out why!
-# - name: Save keybindings
-#   shell: "dconf dump {{ keybindings_dconf_path }} > /tmp/keybindings.dconf"
-#   tags: keybindings
+    var: sabesp_bills
 
-# - name: Backup keybindings to S3
-#   s3_sync:
-#     bucket: "{{ bucket }}"
-#     profile: "{{ aws_profile }}"
-#     key_prefix: "keybindings"
-#     file_root: "/tmp"
-#     include: "keybindings.dconf"
-#   tags: keybindings
+- name: Remove container
+  docker_container:
+    name: "{{ container_name }}"
+    state: absent

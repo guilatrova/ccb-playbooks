@@ -70,8 +70,9 @@ def get_bills(rgi, owner):
 
 
 if __name__ == "__main__":
-    rgi = sys.argv[1]
-    owner = sys.argv[2]
+    location = sys.argv[1]
+    rgi = sys.argv[2]
+    owner = sys.argv[3]
     bills = get_bills(rgi, owner)
     for bill in bills:
-        print(f"{bill['month']};{bill['due_date']};{bill['value']}")
+        print(f"{location},{bill['month']};{bill['due_date']};{bill['value']}")
