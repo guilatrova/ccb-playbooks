@@ -10,6 +10,7 @@ logging.getLogger().setLevel(logging.INFO)
 
 BASE_URL = "https://www9.sabesp.com.br/agenciavirtual/"
 SILENT = True
+SEM_CONTA = [{"month": "SEM CONTA", "due_date": "SEM CONTA", "value": 0}]
 
 
 def log(message):
@@ -34,45 +35,56 @@ def get_bills(rgi, owner):
     def click_prosseguir():
         driver.find_element_by_xpath("//*[contains(text(), 'PROSSEGUIR')]").click()
 
-    # Access Page
-    driver.get(BASE_URL)
-    log(f"Accessed {BASE_URL}")
-    log(f"Page title {driver.title}")
-    assert "Sabesp" in driver.title
+    try:
+        # Access Page
+        driver.get(BASE_URL)
+        log(f"Accessed {BASE_URL}")
+        log(f"Page title {driver.title}")
+        assert "Sabesp" in driver.title
 
-    # Type RGI
-    driver.find_element_by_css_selector("[title='Consulte seus débitos']").click()
-    driver.find_element_by_id("frmhome:rgi1").send_keys(rgi)
-    click_prosseguir()
+        # Type RGI
+        driver.find_element_by_css_selector("[title='Consulte seus débitos']").click()
+        driver.find_element_by_id("frmhome:rgi1").send_keys(rgi)
+        click_prosseguir()
 
-    log("Submitted RGI")
+        log("Submitted RGI")
 
-    # Confirm
-    wait.until(EC.text_to_be_present_in_element((By.TAG_NAME, "form"), owner))
-    click_prosseguir()
+        # Confirm
+        wait.until(EC.text_to_be_present_in_element((By.TAG_NAME, "form"), owner))
+        click_prosseguir()
 
-    log("Confirmed RGI")
+        log("Confirmed RGI")
 
-    # Get bills
-    bills = []
-    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".iceDatTbl")))
-    table = driver.find_element_by_css_selector(".iceDatTbl")
+        # Check if there's data to read
+        wait.until(EC.presence_of_element_located((By.ID, "frmhome:pglogado")))
 
-    rows = table.find_elements_by_tag_name("tr")
-    for row in rows:
-        columns = row.find_elements_by_tag_name("td")
-        if columns:
-            # column 0 = empty with checkbox
-            bills.append({"month": columns[1].text, "due_date": columns[2].text, "value": columns[3].text})
+        page_content = driver.find_element_by_id("frmhome:conteudo").text
+        if "Não há contas em aberto para este imóvel." in page_content:
+            return SEM_CONTA
 
-    driver.quit()
-    return bills
+        # Get bills
+        bills = []
+        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".iceDatTbl")))
+        table = driver.find_element_by_css_selector(".iceDatTbl")
+
+        rows = table.find_elements_by_tag_name("tr")
+        for row in rows:
+            columns = row.find_elements_by_tag_name("td")
+            if columns:
+                # column 0 = empty with checkbox
+                bills.append({"month": columns[1].text, "due_date": columns[2].text, "value": columns[3].text})
+
+        return bills
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":
     location = sys.argv[1]
     rgi = sys.argv[2]
     owner = sys.argv[3]
+
     bills = get_bills(rgi, owner)
+
     for bill in bills:
         print(f"{location};{bill['month']};{bill['due_date']};{bill['value']}")
