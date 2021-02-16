@@ -4,6 +4,8 @@ Verifica todas as contas da **CPFL e Sabesp** em aberto de todas instalações d
 
 Pode ser facilmente adaptado para outras empresa que possuam instalações registradas a CPFL ou Sabesp.
 
+![email example](img/exemplo-cpfl.png)
+
 ## Configurações
 
 Criar os arquivos:
